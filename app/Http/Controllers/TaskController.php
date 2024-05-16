@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TaskCreateRequest;
+use App\Http\Requests\TaskUpdateRequest;
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -12,7 +16,13 @@ class TaskController extends Controller
      */
     public function index()
     {
-        //
+        $userid = auth()->user()->id;
+        $user = User::find($userid);
+        $tasks = $user->tasks()->get();
+
+        return view('tasks', [
+            'tasks' => $tasks
+        ]);
     }
 
     /**
@@ -26,9 +36,15 @@ class TaskController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(TaskCreateRequest $request)
     {
-        //
+        $task = Task::make();
+        $task->name = $request->validated()['name'];
+        $task->is_done = false;
+        $task->user_id = Auth::id();
+        $task->save();
+
+        return redirect()->route('tasks.index');
     }
 
     /**
@@ -50,9 +66,12 @@ class TaskController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Task $task)
+    public function update(Task $task)
     {
-        //
+        $task->is_done = !$task->is_done;
+        $task->save();
+
+        return redirect()->back();
     }
 
     /**
@@ -60,6 +79,8 @@ class TaskController extends Controller
      */
     public function destroy(Task $task)
     {
-        //
+        $task->delete();
+
+        return redirect()->back();
     }
 }
